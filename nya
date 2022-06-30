@@ -1,0 +1,92 @@
+#!/bin/zsh
+
+# Sync data
+if test "$1" = "sync"
+then
+  gh repo sync --branch master
+  exit
+fi
+
+# Check params
+set=none
+for i in "$@"
+do
+  case ${i} in
+    -m)
+        set=mode
+        ;;
+    -o)
+        set=outFile
+        ;;
+    -p)
+        set=port
+        ;;
+    -s)
+        set=server
+        ;;
+    -c)
+        set=cert
+        ;;
+    -k)
+        set=key
+        ;;
+    *)
+        if test "${set}" != "none"
+        then
+          case ${set} in
+            mode)
+                mode=${i}
+                ;;
+            outFile)
+                outFile=${i}
+                ;;
+            port)
+                port=${i}
+                ;;
+            server)
+                server=${i}
+                ;;
+            cert)
+                cert=${i}
+                ;;
+            key)
+                key=${i}
+                ;;
+          esac
+          set=none
+        fi
+  esac
+done
+
+# Check table
+selfIP="${$(curl -sL ip.tool.lu | sed "s/[[:space:]]//g" | grep IP)#*:}"
+if test -z $(cat ./table | grep ${selfIP})
+then
+  echo ${selfIP} >> ./table
+fi
+
+# Prepare command
+cmd="ncat"
+if test "${mode}" = "server"
+then
+  cmd="${cmd} --listen --chat --keep-open"
+  if test -n "${cert}" -a -n "${key}"
+  then
+    cmd="${cmd} --ssl --ssl-cert ${cert} --ssl-key ${key}"
+  fi
+elif test "${mode}" = "client"
+then
+  cmd="${cmd} $(head -n 1 ./server)"
+  if test -n "${cert}" -a -n "${key}"
+  then
+    cmd="${cmd} --ssl-verify --ssl-cert ${cert} --ssl-key ${key}"
+  fi
+fi
+if test -n "${outFile}"
+then
+  cmd="${cmd} --output ${outFile}"
+fi
+cmd="${cmd} --allowfile ./table"
+
+# Get start
+exec $(echo ${cmd})
