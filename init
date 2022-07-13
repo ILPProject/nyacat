@@ -1,0 +1,15 @@
+#!/bin/zsh
+
+# Usage:
+# nya init
+
+mkdir -p /etc/nyacat
+mkdir -p /var/log/nyacat
+mkdir -p /var/cache/nyacat
+
+touch /etc/nyacat/user.yaml
+touch /etc/nyacat/server.yaml
+touch /etc/nyacat/ssl.yaml
+
+touch /var/log/nyacat/info.log
+touch /var/log/nyacat/error.log

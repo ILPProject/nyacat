@@ -1,0 +1,36 @@
+#!/bin/zsh
+
+# Usage:
+# nya sync -u
+# nya sync -s
+
+if test "${1}" = "-u"
+then
+  cp /etc/nyacat/user.yaml /var/cache/user.yaml
+  mode="user"
+elif test "${1}" = "-s"
+then
+  cp /etc/nyacat/server.yaml /var/cache/server.yaml
+  mode="server"
+fi
+
+hosts=($(yq "." /var/cache/${mode}.yaml | grep -v true | grep -v false | sed -e "s/://g" | sed -e "s/[[:space:]]/,/g"))
+for h in ${hosts}
+do
+  if test ! -e /var/cache/nyacat/${mode}s/${h}
+  then
+    mkdir -p /var/cache/nyacat/${mode}s/${h}
+  fi
+  repos=($(echo ${$(yq ".${h}" tmp.yaml | grep -e true -e false | sed -E -e "s/://g" -e "s/true|false//g")##*:} | sed -e "s/[[:space:]]/,/g"))
+  for r in ${repos}
+  do
+    if test ! -e /var/cache/nyacat/${mode}s/${h}/${r}
+    then
+      mkdir -p /var/cache/nyacat/${mode}s/${h}/${r}
+      gh repo clone ${h}/${r} /var/cache/nyacat/${mode}s/${h}/${r}
+    else
+      gh repo sync /var/cache/nyacat/${mode}s/${h}/${r}
+    fi
+  done
+done
+

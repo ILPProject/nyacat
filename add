@@ -1,0 +1,34 @@
+#!/bin/zsh
+
+# Usage:
+# nya add -u userName userID
+# nya add -s serverName serverID
+
+userTable="/etc/nyacat/user.yaml"
+serverTable="/etc/nyacat/server.yaml"
+
+if test "${1}" = "-u"
+then
+  table="/etc/nyacat/user.yaml"
+elif test "${1}" = "-s"
+then
+  table="/etc/nyacat/server.yaml"
+else
+  echo ":("
+  exit
+fi
+
+if test "$(yq \".${2}\" ${table})" = "null"
+then
+  yq -i ".${2}" ${table}
+else
+  echo "User already exist, will only add new ID and set as default"
+fi
+
+if test "$(yq \".${2}.${3}\" ${table})" = "null"
+then
+  yq -i ".${2}.*=false" ${table}
+  yq -i ".${2}.${3}=true" ${table}
+else
+  echo "ID already exist for this user"
+fi
